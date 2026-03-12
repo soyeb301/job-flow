@@ -1,4 +1,5 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./auth";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseServer = createClient(
@@ -7,27 +8,22 @@ const supabaseServer = createClient(
 );
 
 export async function ensureDBUser() {
-  // Get the logged-in Clerk user
-  const clerkUser = await currentUser();
-  if (!clerkUser) {
-    console.log("ensureDBUser: No Clerk user found");
+  // Get the NextAuth session
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user?.id) {
+    console.log("ensureDBUser: No session found");
     return null;
   }
 
-  // Ensure there's at least one email
-  const email = clerkUser.emailAddresses?.[0]?.emailAddress;
-  if (!email) {
-    console.log("ensureDBUser: No email found for user");
-    return null;
-  }
+  const userId = session.user.id;
+  console.log("ensureDBUser: Looking for user with id:", userId);
 
-  console.log("ensureDBUser: Looking for user with clerk_id:", clerkUser.id);
-
-  // Try to find user by clerk_id first
+  // Find user by id
   const { data: existingUser, error: findError } = await supabaseServer
     .from("users")
     .select("*")
-    .eq("clerk_id", clerkUser.id)
+    .eq("id", userId)
     .single();
 
   if (findError && findError.code !== "PGRST116") {
@@ -37,55 +33,11 @@ export async function ensureDBUser() {
 
   console.log("ensureDBUser: existingUser:", existingUser);
 
-  // If user exists, return them
+  // Return the user if found
   if (existingUser) {
     return existingUser;
   }
 
-  // Fallback: if not found by clerk_id, try by email
-  const { data: userByEmail, error: emailError } = await supabaseServer
-    .from("users")
-    .select("*")
-    .eq("email", email)
-    .single();
-
-  if (emailError && emailError.code !== "PGRST116") {
-    console.error("Error finding user by email:", emailError);
-    return null;
-  }
-
-  if (userByEmail) {
-    // Update the user with clerk_id if found by email
-    const { data: updatedUser, error: updateError } = await supabaseServer
-      .from("users")
-      .update({ clerk_id: clerkUser.id })
-      .eq("id", userByEmail.id)
-      .select()
-      .single();
-
-    if (updateError) {
-      console.error("Error updating user:", updateError);
-      return null;
-    }
-    return updatedUser;
-  }
-
-  // If user still doesn't exist, create in Supabase
-  const { data: newUser, error: createError } = await supabaseServer
-    .from("users")
-    .insert({
-      clerk_id: clerkUser.id,
-      email,
-      name: clerkUser.firstName ?? clerkUser.fullName ?? "",
-      image: clerkUser.imageUrl ?? "",
-    })
-    .select()
-    .single();
-
-  if (createError) {
-    console.error("Error creating user:", createError);
-    return null;
-  }
-
-  return newUser;
+  console.log("ensureDBUser: User not found in database");
+  return null;
 }

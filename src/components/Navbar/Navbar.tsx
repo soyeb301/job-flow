@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Menu,
@@ -24,17 +25,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  useUser,
-  SignInButton,
-  SignOutButton,
-  SignUpButton,
-} from "@clerk/nextjs";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
-  const { isSignedIn, user } = useUser();
+  const { data: session, status } = useSession();
+  const isSignedIn = status === "authenticated";
+  const user = session?.user;
 
   const homeLinks = [
     { name: "Tools", href: "/#tools", icon: ToolCaseIcon },
@@ -146,30 +143,28 @@ export default function Navbar() {
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2">
                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
-                    {user?.firstName?.charAt(0)}
+                    {user?.name?.charAt(0) || user?.username?.charAt(0)}
                   </div>
                   <span className="text-sm font-medium">
-                    Hi, {user?.firstName}
+                    Hi, {user?.name || user?.username}
                   </span>
                 </div>
-                <SignOutButton>
-                  <Button variant="outline" size="sm" className="h-9">
-                    Sign Out
-                  </Button>
-                </SignOutButton>
+                <Button variant="outline" size="sm" className="h-9" onClick={() => signOut()}>
+                  Sign Out
+                </Button>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <SignInButton>
+                <Link href="/login">
                   <Button variant="ghost" size="sm" className="h-9">
                     Sign In
                   </Button>
-                </SignInButton>
-                <SignUpButton>
+                </Link>
+                <Link href="/signup">
                   <Button variant="outline" size="sm" className="h-9">
                     Sign Up
                   </Button>
-                </SignUpButton>
+                </Link>
               </div>
             )}
           </div>
@@ -266,40 +261,39 @@ export default function Navbar() {
                   <>
                     <div className="flex items-center space-x-3">
                       <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-medium">
-                        {user?.firstName?.charAt(0)}
+                        {user?.name?.charAt(0) || user?.username?.charAt(0)}
                       </div>
-                      <span className="font-medium">Hi, {user?.firstName}</span>
+                      <span className="font-medium">Hi, {user?.name || user?.username}</span>
                     </div>
-                    <SignOutButton>
-                      <Button
-                        variant="outline"
-                        className="w-full max-w-xs bg-transparent"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Sign Out
-                      </Button>
-                    </SignOutButton>
+                    <Button
+                      variant="outline"
+                      className="w-full max-w-xs bg-transparent"
+                      onClick={() => {
+                        signOut();
+                        setIsOpen(false);
+                      }}
+                    >
+                      Sign Out
+                    </Button>
                   </>
                 ) : (
                   <div className="flex flex-col items-center gap-2 w-full max-w-xs">
-                    <SignInButton>
+                    <Link href="/login" onClick={() => setIsOpen(false)}>
                       <Button
                         variant="ghost"
                         className="w-full bg-transparent"
-                        onClick={() => setIsOpen(false)}
                       >
                         Sign In
                       </Button>
-                    </SignInButton>
-                    <SignUpButton>
+                    </Link>
+                    <Link href="/signup" onClick={() => setIsOpen(false)}>
                       <Button
                         variant="outline"
                         className="w-full bg-transparent"
-                        onClick={() => setIsOpen(false)}
                       >
                         Sign Up
                       </Button>
-                    </SignUpButton>
+                    </Link>
                   </div>
                 )}
               </div>

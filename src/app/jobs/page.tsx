@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import {
   Select,
   SelectTrigger,
@@ -14,7 +15,7 @@ import {
 import { JobForm } from "@/types/job";
 import AddJobModal from "./AddJobModal";
 import MatchModal from "./MatchModal";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<JobForm[]>([]);
@@ -26,7 +27,8 @@ export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const { isSignedIn, user } = useUser();
+  const { status } = useSession();
+  const isSignedIn = status === "authenticated";
 
   // Fetch jobs when user is signed in
   useEffect(() => {
@@ -104,11 +106,11 @@ export default function JobsPage() {
         <p className="text-zinc-600 dark:text-zinc-400">
           You must be logged in to view this page.
         </p>
-        <SignInButton>
+        <Link href="/login">
           <Button className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
             Login
           </Button>
-        </SignInButton>
+        </Link>
       </div>
     );
   }

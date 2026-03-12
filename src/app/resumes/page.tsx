@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import { useSession, signIn } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import AnalysisModal from "@/components/AnalysisModal/AnalysisModal";
+import Link from "next/link";
 
 interface Resume {
   id: string;
@@ -15,7 +16,8 @@ interface Resume {
 }
 
 export default function ResumeManagerPage() {
-  const { isSignedIn, user } = useUser();
+  const { data: session, status } = useSession();
+  const isSignedIn = status === "authenticated";
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -170,11 +172,11 @@ export default function ResumeManagerPage() {
         <p className="text-zinc-600 dark:text-zinc-400">
           You must be logged in to view and upload resumes.
         </p>
-        <SignInButton>
+        <Link href="/login">
           <Button className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
             Login
           </Button>
-        </SignInButton>
+        </Link>
       </div>
     );
   }

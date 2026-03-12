@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -40,7 +41,8 @@ interface Resume {
 }
 
 export default function DashboardPage() {
-  const { isSignedIn } = useUser();
+  const { status } = useSession();
+  const isSignedIn = status === "authenticated";
   const [jobs, setJobs] = useState<Job[]>([]);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,11 +156,11 @@ export default function DashboardPage() {
             Sign in to access your personalized job tracking dashboard with
             AI-powered insights.
           </p>
-          <SignInButton>
+          <Link href="/login">
             <Button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg">
               Sign In to Continue
             </Button>
-          </SignInButton>
+          </Link>
         </motion.div>
       </div>
     );
