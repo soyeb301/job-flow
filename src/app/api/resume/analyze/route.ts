@@ -69,23 +69,51 @@ export async function POST(req: Request) {
       );
     }
 
-    // Send text to external AI service
-    const prompt = encodeURIComponent(
-      `You're a professional resume reviewer. Please analyze the following resume and suggest 2–3 specific improvements to make it more effective for job applications:\n\n${parsedText}`
-    );
+    // Send text to Gemini API
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      return NextResponse.json(
+        { error: "Gemini API key not configured" },
+        { status: 500 }
+      );
+    }
+
+    const prompt = `You're a professional resume reviewer. Please analyze the following resume and suggest 2–3 specific improvements to make it more effective for job applications:\n\n${parsedText}`;
 
     const response = await fetch(
-      `https://text.pollinations.ai/prompt/${prompt}`
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }),
+      }
     );
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Gemini API error:", errorData);
       return NextResponse.json(
         { error: "AI analysis service failed" },
         { status: 500 }
       );
     }
 
-    const suggestions = await response.text();
+    const data = await response.json();
+    const suggestions =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No analysis available";
 
     return NextResponse.json({ analysis: suggestions });
   } catch (err) {

@@ -74,29 +74,57 @@ export async function POST(req: Request) {
       });
     });
 
-    // Construct AI prompt
-    const prompt = encodeURIComponent(`
-Compare the following resume and job description. Give a match score (0–100), list key missing skills, and suggest improvements.
+    // Send to Gemini API
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      return NextResponse.json(
+        { error: "Gemini API key not configured" },
+        { status: 500 }
+      );
+    }
+
+    const prompt = `Compare the following resume and job description. Give a match score (0–100), list key missing skills, and suggest improvements.
 
 Resume:
 ${parsedText}
 
 Job Description:
-${job.description}
-`);
+${job.description}`;
 
     const response = await fetch(
-      `https://text.pollinations.ai/prompt/${prompt}`
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }),
+      }
     );
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Gemini API error:", errorData);
       return NextResponse.json(
         { error: "AI match service failed" },
         { status: 500 }
       );
     }
 
-    const matchFeedback = await response.text();
+    const data = await response.json();
+    const matchFeedback =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No match analysis available";
 
     return NextResponse.json({ matchFeedback });
   } catch (err) {

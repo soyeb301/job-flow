@@ -9,11 +9,19 @@ const supabaseServer = createClient(
 export async function ensureDBUser() {
   // Get the logged-in Clerk user
   const clerkUser = await currentUser();
-  if (!clerkUser) return null;
+  if (!clerkUser) {
+    console.log("ensureDBUser: No Clerk user found");
+    return null;
+  }
 
   // Ensure there's at least one email
   const email = clerkUser.emailAddresses?.[0]?.emailAddress;
-  if (!email) return null;
+  if (!email) {
+    console.log("ensureDBUser: No email found for user");
+    return null;
+  }
+
+  console.log("ensureDBUser: Looking for user with clerk_id:", clerkUser.id);
 
   // Try to find user by clerk_id first
   const { data: existingUser, error: findError } = await supabaseServer
@@ -26,6 +34,8 @@ export async function ensureDBUser() {
     console.error("Error finding user:", findError);
     return null;
   }
+
+  console.log("ensureDBUser: existingUser:", existingUser);
 
   // If user exists, return them
   if (existingUser) {
