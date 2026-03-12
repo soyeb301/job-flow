@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+
 import { createClient } from "@supabase/supabase-js";
-import { ensureDBUser } from "@/lib/ensureDbUser"; // 🔑 Clerk → Prisma bridge
+import { ensureDBUser } from "@/lib/ensureDbUser"; 
 
 const supabaseServer = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,8 +10,8 @@ const supabaseServer = createClient(
 
 interface Resume {
   id: string;
-  createdAt: Date;
-  fileUrl: string;
+  created_at: string;
+  file_url: string;
 }
 
 export async function GET() {
@@ -22,22 +22,28 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch resumes for this user
-    const resumes = await prisma.resume.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-    });
+    // Fetch resumes for this user from Supabase
+    const { data: resumes, error } = await supabaseServer
+      .from("resumes")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching resumes:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     // Sign each file URL with Supabase
     const signedResumes = await Promise.all(
-      resumes.map(async (resume: Resume) => {
+      (resumes || []).map(async (resume: Resume) => {
         const { data } = await supabaseServer.storage
           .from("resumes")
-          .createSignedUrl(resume.fileUrl, 60 * 60); // 1h expiration
+          .createSignedUrl(resume.file_url, 60 * 60); // 1h expiration
 
         return {
           id: resume.id,
-          createdAt: resume.createdAt,
+          createdAt: resume.created_at,
           url: data?.signedUrl || "",
         };
       })

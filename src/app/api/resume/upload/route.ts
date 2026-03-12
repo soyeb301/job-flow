@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { prisma } from "@/lib/prisma";
-import { ensureDBUser } from "@/lib/ensureDbUser"; // Clerk → Prisma bridge
+import { ensureDBUser } from "@/lib/ensureDbUser";
 
 // Server-side Supabase client using SERVICE ROLE key
 const supabaseServer: SupabaseClient = createClient(
@@ -65,13 +64,21 @@ export async function POST(req: Request) {
 
     const signedData: SignedUrlData = signedUrlData;
 
-    // Save resume record in Prisma
-    await prisma.resume.create({
-      data: {
-        userId, // Clerk-linked user
-        fileUrl: filePath,
-      },
-    });
+    // Save resume record in Supabase
+    const { error: dbError } = await supabaseServer
+      .from("resumes")
+      .insert({
+        user_id: userId,
+        file_url: filePath,
+      });
+
+    if (dbError) {
+      console.error("Error saving resume to database:", dbError);
+      return NextResponse.json(
+        { error: "Failed to save resume record" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ url: signedData.signedUrl });
   } catch (err) {

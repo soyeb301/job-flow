@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
 import { PdfReader } from "pdfreader";
-import { ensureDBUser } from "@/lib/ensureDbUser"; // Clerk → Prisma bridge
+import { ensureDBUser } from "@/lib/ensureDbUser";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,24 +21,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing resume ID" }, { status: 400 });
     }
 
-    // Fetch resume
-    const resume = await prisma.resume.findUnique({
-      where: { id: resumeId },
-    });
+    // Fetch resume from Supabase
+    const { data: resume, error: resumeError } = await supabase
+      .from("resumes")
+      .select("*")
+      .eq("id", resumeId)
+      .single();
 
-    if (!resume) {
+    if (resumeError || !resume) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
     // ✅ Security check: only owner can analyze
-    if (resume.userId !== user.id) {
+    if (resume.user_id !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Download file from Supabase
     const { data: fileData, error: downloadError } = await supabase.storage
       .from("resumes")
-      .download(resume.fileUrl);
+      .download(resume.file_url);
 
     if (downloadError || !fileData) {
       return NextResponse.json(

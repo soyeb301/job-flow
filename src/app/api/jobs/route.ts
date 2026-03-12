@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createClient } from "@supabase/supabase-js";
 import { ensureDBUser } from "@/lib/ensureDbUser";
+
+const supabaseServer = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Create a new job
 export async function POST(req: Request) {
@@ -14,16 +19,25 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { position, company, status, description } = body;
 
-    const job = await prisma.job.create({
-      data: {
-        userId: user.id,
+    const { data: job, error } = await supabaseServer
+      .from("jobs")
+      .insert({
+        user_id: user.id,
         position,
         company,
         status,
         description,
-        createdAt: new Date(),
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error(error);
+      return NextResponse.json(
+        { error: "Failed to create job" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(job, { status: 201 });
   } catch (error) {
@@ -43,10 +57,19 @@ export async function GET() {
   }
 
   try {
-    const jobs = await prisma.job.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-    });
+    const { data: jobs, error } = await supabaseServer
+      .from("jobs")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return NextResponse.json(
+        { error: "Failed to fetch jobs" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(jobs);
   } catch (error) {

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
 import { ensureDBUser } from "@/lib/ensureDbUser";
 
@@ -26,25 +25,27 @@ export async function PUT(req: Request) {
     const newFile = formData.get("file") as File | null;
     const newName = formData.get("name") as string | null;
 
-    // Find resume
-    const resume = await prisma.resume.findUnique({
-      where: { id: resumeId },
-    });
+    // Find resume in Supabase
+    const { data: resume, error: findError } = await supabase
+      .from("resumes")
+      .select("*")
+      .eq("id", resumeId)
+      .single();
 
-    if (!resume) {
+    if (findError || !resume) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
-    if (resume.userId !== user.id) {
+    if (resume.user_id !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    let filePath = resume.fileUrl;
+    let filePath = resume.file_url;
 
     // ✅ If user uploaded a new file → replace in Supabase
     if (newFile) {
       // Delete old file
-      await supabase.storage.from("resumes").remove([resume.fileUrl]);
+      await supabase.storage.from("resumes").remove([resume.file_url]);
 
       // Upload new file
       filePath = `resumes/${user.id}-${Date.now()}.pdf`;
@@ -64,14 +65,23 @@ export async function PUT(req: Request) {
       }
     }
 
-    // ✅ Update record in Prisma
-    const updatedResume = await prisma.resume.update({
-      where: { id: resumeId },
-      data: {
-        fileUrl: filePath,
-        ...(newName ? { name: newName } : {}), // optional metadata
-      },
-    });
+    // ✅ Update record in Supabase
+    const { data: updatedResume, error: updateError } = await supabase
+      .from("resumes")
+      .update({
+        file_url: filePath,
+      })
+      .eq("id", resumeId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating resume:", updateError);
+      return NextResponse.json(
+        { error: "Failed to update resume" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(updatedResume);
   } catch (err) {

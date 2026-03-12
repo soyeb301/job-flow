@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
-import { ensureDBUser } from "@/lib/ensureDbUser"; // Clerk → Prisma bridge
+import { ensureDBUser } from "@/lib/ensureDbUser";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 interface DeleteRequestBody {
@@ -22,30 +21,44 @@ export async function POST(req: Request) {
   try {
     const body: DeleteRequestBody = await req.json();
 
-    const resume = await prisma.resume.findUnique({
-      where: { id: body.resumeId },
-    });
+    // Find resume in Supabase
+    const { data: resume, error: findError } = await supabase
+      .from("resumes")
+      .select("*")
+      .eq("id", body.resumeId)
+      .single();
 
-    if (!resume) {
+    if (findError || !resume) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
     // ✅ Ensure the resume belongs to the logged-in user
-    if (resume.userId !== user.id) {
+    if (resume.user_id !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Delete from Supabase storage
     const { error: supabaseError } = await supabase.storage
       .from("resumes")
-      .remove([resume.fileUrl]);
+      .remove([resume.file_url]);
 
     if (supabaseError) {
       throw supabaseError;
     }
 
-    // Delete from Prisma
-    await prisma.resume.delete({ where: { id: resume.id } });
+    // Delete from Supabase database
+    const { error: deleteError } = await supabase
+      .from("resumes")
+      .delete()
+      .eq("id", resume.id);
+
+    if (deleteError) {
+      console.error("Error deleting resume from database:", deleteError);
+      return NextResponse.json(
+        { error: "Failed to delete resume record" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
