@@ -16,13 +16,11 @@ interface Resume {
 
 export async function GET() {
   try {
-    // Ensure Clerk user exists in DB
     const user = await ensureDBUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch resumes for this user from Supabase
     const { data: resumes, error } = await supabaseServer
       .from("resumes")
       .select("*")
@@ -30,16 +28,14 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching resumes:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Sign each file URL with Supabase
     const signedResumes = await Promise.all(
       (resumes || []).map(async (resume: Resume) => {
         const { data } = await supabaseServer.storage
           .from("resumes")
-          .createSignedUrl(resume.file_url, 60 * 60); // 1h expiration
+          .createSignedUrl(resume.file_url, 60 * 60);
 
         return {
           id: resume.id,

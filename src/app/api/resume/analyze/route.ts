@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { PdfReader } from "pdfreader";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ensureDBUser } from "@/lib/ensureDbUser";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
@@ -69,51 +72,18 @@ export async function POST(req: Request) {
       );
     }
 
-    // Send text to Gemini API
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-    if (!geminiApiKey) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
         { error: "Gemini API key not configured" },
         { status: 500 }
       );
     }
 
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const prompt = `You're a professional resume reviewer. Please analyze the following resume and suggest 2–3 specific improvements to make it more effective for job applications:\n\n${parsedText}`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Gemini API error:", errorData);
-      return NextResponse.json(
-        { error: "AI analysis service failed" },
-        { status: 500 }
-      );
-    }
-
-    const data = await response.json();
-    const suggestions =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No analysis available";
+    const result = await model.generateContent(prompt);
+    const suggestions = result.response.text();
 
     return NextResponse.json({ analysis: suggestions });
   } catch (err) {
