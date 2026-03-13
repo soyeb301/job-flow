@@ -24,28 +24,9 @@ const Footer = () => {
     {
       title: "Product",
       links: [
-        { name: "AI Resume Builder", href: "/resume-builder", icon: FileText },
+        { name: "AI Resume Builder", href: "/resumes", icon: FileText },
         { name: "Job Application Tracker", href: "/jobs", icon: BarChart3 },
         { name: "Dashboard", href: "/dashboard", icon: Users },
-        { name: "Resources", href: "/resources", icon: Brain },
-      ],
-    },
-    {
-      title: "Company",
-      links: [
-        { name: "About Us", href: "/about" },
-        { name: "Careers", href: "/careers" },
-        { name: "Blog", href: "/blog" },
-        { name: "Contact", href: "/contact" },
-      ],
-    },
-    {
-      title: "Support",
-      links: [
-        { name: "Help Center", href: "/help" },
-        { name: "Documentation", href: "/docs" },
-        { name: "API Reference", href: "/api-docs" },
-        { name: "Status", href: "/status" },
       ],
     },
     {
@@ -53,8 +34,6 @@ const Footer = () => {
       links: [
         { name: "Privacy Policy", href: "/privacy" },
         { name: "Terms of Service", href: "/terms" },
-        { name: "Cookie Policy", href: "/cookies" },
-        { name: "GDPR", href: "/gdpr" },
       ],
     },
   ];
@@ -134,7 +113,7 @@ const Footer = () => {
                         href={link.href}
                         className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 flex items-center space-x-2 group"
                       >
-                        {link.icon && (
+                        {"icon" in link && link.icon && (
                           <link.icon className="h-4 w-4 group-hover:text-primary transition-colors" />
                         )}
                         <span className="group-hover:translate-x-0.5 transition-transform duration-200">
