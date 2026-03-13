@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   PieChart,
   Pie,
@@ -25,7 +25,17 @@ import {
   Users,
   Calendar,
   Target,
+  Plus,
+  Sparkles,
+  ArrowRight,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Zap,
+  BarChart3,
+  ChevronRight
 } from "lucide-react";
+import { toast, Toaster } from "react-hot-toast";
 
 interface Job {
   id: string;
@@ -96,15 +106,19 @@ export default function DashboardPage() {
   };
 
   const getRecentActivity = () => {
-    const allItems = [
+    type ActivityItem = 
+      | (Job & { type: "job"; date: Date })
+      | (Resume & { type: "resume"; date: Date });
+    
+    const allItems: ActivityItem[] = [
       ...jobs.map((job) => ({
         ...job,
-        type: "job",
+        type: "job" as const,
         date: new Date(job.createdAt),
       })),
       ...resumes.map((resume) => ({
         ...resume,
-        type: "resume",
+        type: "resume" as const,
         date: new Date(resume.createdAt),
       })),
     ];
@@ -167,94 +181,126 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-blue-50/30 to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-900">
+      <Toaster position="top-right" />
       <div className="p-6 max-w-7xl mx-auto space-y-8">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
         >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            JOB FLOW Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Track your applications, analyze trends, and accelerate your career
-            journey
-          </p>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Dashboard
+            </h1>
+            <p className="text-zinc-600 dark:text-zinc-400 mt-1">
+              Track your applications, analyze trends, and accelerate your career
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-zinc-500 dark:text-zinc-400">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </span>
+          </div>
         </motion.div>
 
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{
-                duration: 1,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "linear",
-              }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
             />
           </div>
         ) : (
           <div className="space-y-8">
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-4"
+            >
+              <Link href="/jobs">
+                <Card className="group cursor-pointer border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/25 hover:-translate-y-1">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                      <Plus className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white">Add Job Application</h3>
+                      <p className="text-blue-100 text-sm">Track a new job opportunity</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                  </CardContent>
+                </Card>
+              </Link>
+
+              <Link href="/resumes">
+                <Card className="group cursor-pointer border-0 shadow-lg bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/25 hover:-translate-y-1">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                      <FileText className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white">Upload Resume</h3>
+                      <p className="text-green-100 text-sm">Add or update your resume</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                  </CardContent>
+                </Card>
+              </Link>
+
+              <Link href="/resumes">
+                <Card className="group cursor-pointer border-0 shadow-lg bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/25 hover:-translate-y-1">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white">AI Resume Analysis</h3>
+                      <p className="text-purple-100 text-sm">Get AI-powered feedback</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                  </CardContent>
+                </Card>
+              </Link>
+            </motion.div>
+
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 {
-                  title: "Total Applications",
+                  title: "Applications",
                   value: jobs.length,
                   icon: Briefcase,
-                  color: "from-blue-500 to-blue-600",
-                  change:
-                    jobs.length > 0
-                      ? `${jobs.length} total`
-                      : "No applications yet",
+                  color: "bg-blue-500",
+                  trend: jobs.length > 0 ? "+" + jobs.length : "Start applying",
+                  trendUp: true,
                 },
                 {
-                  title: "Active Resumes",
+                  title: "Resumes",
                   value: resumes.length,
                   icon: FileText,
-                  color: "from-green-500 to-green-600",
-                  change:
-                    resumes.length > 0
-                      ? `${resumes.length} uploaded`
-                      : "No resumes yet",
+                  color: "bg-green-500",
+                  trend: resumes.length > 0 ? `${resumes.length} active` : "Upload now",
+                  trendUp: resumes.length > 0,
                 },
                 {
-                  title: "Interview Rate",
-                  value:
-                    jobs.length > 0
-                      ? `${Math.round(
-                          (jobs.filter((j) => j.status === "interviewing")
-                            .length /
-                            jobs.length) *
-                            100
-                        )}%`
-                      : "0%",
+                  title: "Interviews",
+                  value: jobs.filter(j => j.status === "interviewing").length,
                   icon: Users,
-                  color: "from-purple-500 to-purple-600",
-                  change: `${
-                    jobs.filter((j) => j.status === "interviewing").length
-                  }/${jobs.length}`,
+                  color: "bg-purple-500",
+                  trend: jobs.length > 0 ? `${Math.round((jobs.filter(j => j.status === "interviewing").length / jobs.length) * 100)}% rate` : "No data",
+                  trendUp: jobs.filter(j => j.status === "interviewing").length > 0,
                 },
                 {
                   title: "Success Rate",
-                  value:
-                    jobs.length > 0
-                      ? `${Math.round(
-                          (jobs.filter((j) =>
-                            ["offer", "hired", "interviewing"].includes(
-                              j.status
-                            )
-                          ).length /
-                            jobs.length) *
-                            100
-                        )}%`
-                      : "0%",
+                  value: jobs.length > 0 ? `${Math.round((jobs.filter(j => ["offer", "hired"].includes(j.status)).length / jobs.length) * 100)}%` : "0%",
                   icon: Target,
-                  color: "from-orange-500 to-orange-600",
-                  change:
-                    jobs.length > 0 ? "Interviews + Offers" : "No data yet",
+                  color: "bg-orange-500",
+                  trend: "Offers + Hired",
+                  trendUp: jobs.filter(j => ["offer", "hired"].includes(j.status)).length > 0,
                 },
               ].map((stat, index) => (
                 <motion.div
@@ -263,25 +309,30 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="relative overflow-hidden border-0 shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
+                  <Card className="border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
                             {stat.title}
                           </p>
-                          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">
                             {stat.value}
                           </p>
-                          <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                            {stat.change}
-                          </p>
                         </div>
-                        <div
-                          className={`w-12 h-12 rounded-lg bg-gradient-to-r ${stat.color} flex items-center justify-center`}
-                        >
-                          <stat.icon className="w-6 h-6 text-white" />
+                        <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center`}>
+                          <stat.icon className="w-5 h-5 text-white" />
                         </div>
+                      </div>
+                      <div className="flex items-center gap-1 mt-3">
+                        {stat.trendUp ? (
+                          <TrendingUp className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <AlertCircle className="w-3 h-3 text-zinc-400" />
+                        )}
+                        <span className={`text-xs ${stat.trendUp ? 'text-green-600 dark:text-green-400' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                          {stat.trend}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -493,9 +544,7 @@ export default function DashboardPage() {
                               <div>
                                 <p className="font-medium text-gray-900 dark:text-gray-100">
                                   {item.type === "job"
-                                    ? `Applied to ${
-                                        (item as Job).position
-                                      } at ${(item as Job).company}`
+                                    ? `Applied to ${item.position} at ${item.company}`
                                     : `Uploaded new resume`}
                                 </p>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">

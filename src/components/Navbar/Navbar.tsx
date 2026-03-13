@@ -5,6 +5,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Menu,
@@ -14,7 +15,12 @@ import {
   Bot,
   Briefcase,
   FileText,
-  ToolCaseIcon,
+  LayoutDashboard,
+  User,
+  LogOut,
+  Settings,
+  ChevronDown,
+  Wrench,
   Info,
   Star,
   Search,
@@ -23,6 +29,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -30,11 +37,19 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const isSignedIn = status === "authenticated";
   const user = session?.user;
 
+  const isActive = (href: string) => {
+    if (href.startsWith('/#')) {
+      return pathname === '/' && typeof window !== 'undefined' && window.location.hash === href.substring(1);
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
   const homeLinks = [
-    { name: "Tools", href: "/#tools", icon: ToolCaseIcon },
+    { name: "Tools", href: "/#tools", icon: Wrench },
     { name: "How it Works", href: "/#how-it-works", icon: Info },
     { name: "Highlight", href: "/#highlight", icon: Star },
     { name: "Job Search", href: "/#job-search", icon: Search },
@@ -42,25 +57,25 @@ export default function Navbar() {
 
   const navLinks = [
     {
-      name: "AI Resume Analyzer",
+      name: "Resumes",
       href: "/resumes",
       icon: FileText,
-      description: "Analyze professional resumes with AI",
+      description: "Analyze & manage resumes",
     },
     {
-      name: "Job Application Tracker",
+      name: "Jobs",
       href: "/jobs",
       icon: Briefcase,
-      description: "Track your job applications",
+      description: "Track applications",
     },
   ];
 
   if (isSignedIn) {
-    navLinks.push({
+    navLinks.unshift({
       name: "Dashboard",
       href: "/dashboard",
-      icon: Bot,
-      description: "Your personalized dashboard",
+      icon: LayoutDashboard,
+      description: "Your overview",
     });
   }
 
@@ -83,20 +98,30 @@ export default function Navbar() {
           <nav className="hidden lg:flex items-center space-x-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
+              const active = isActive(link.href);
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="group relative flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground"
+                  className={`group relative flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                    active 
+                      ? "bg-accent text-accent-foreground" 
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`}
                   scroll={false}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={`h-4 w-4 ${active ? "text-blue-600" : ""}`} />
                   <span>{link.name}</span>
-                  <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 transition-opacity group-hover:opacity-100" />
+                  {active && (
+                    <motion.div
+                      layoutId="activeNav"
+                      className="absolute inset-x-0 -bottom-px h-0.5 bg-gradient-to-r from-blue-600 to-purple-600"
+                    />
+                  )}
                 </Link>
               );
             })}
-            {homeLinks.map((link) => {
+            {!isSignedIn && homeLinks.map((link) => {
               const Icon = link.icon;
               return (
                 <Link
@@ -106,7 +131,6 @@ export default function Navbar() {
                 >
                   <Icon className="h-4 w-4" />
                   <span>{link.name}</span>
-                  <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 transition-opacity group-hover:opacity-100" />
                 </Link>
               );
             })}
@@ -141,17 +165,54 @@ export default function Navbar() {
 
             {isSignedIn ? (
               <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
-                    {user?.name?.charAt(0) || user?.username?.charAt(0)}
-                  </div>
-                  <span className="text-sm font-medium">
-                    Hi, {user?.name || user?.username}
-                  </span>
-                </div>
-                <Button variant="outline" size="sm" className="h-9" onClick={() => signOut()}>
-                  Sign Out
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-9 pl-2 pr-3 flex items-center gap-2 hover:bg-accent">
+                      <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                        {user?.name?.charAt(0) || user?.username?.charAt(0)}
+                      </div>
+                      <span className="text-sm font-medium hidden sm:inline-block max-w-[100px] truncate">
+                        {user?.name || user?.username}
+                      </span>
+                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="flex items-center gap-2 p-2">
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                        {user?.name?.charAt(0) || user?.username?.charAt(0)}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{user?.name || user?.username}</span>
+                        <span className="text-xs text-muted-foreground">{user?.email}</span>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="cursor-pointer">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/jobs" className="cursor-pointer">
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        My Jobs
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/resumes" className="cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        My Resumes
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer text-red-600 focus:text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
@@ -161,7 +222,7 @@ export default function Navbar() {
                   </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button variant="outline" size="sm" className="h-9">
+                  <Button size="sm" className="h-9 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
                     Sign Up
                   </Button>
                 </Link>
@@ -190,18 +251,23 @@ export default function Navbar() {
             className="fixed inset-x-0 top-16 z-[90] bg-background/95 backdrop-blur-md border-b lg:hidden"
           >
             <div className="container mx-auto p-4">
-              <nav className="space-y-2">
+              <nav className="space-y-1">
                 {navLinks.map((link) => {
                   const Icon = link.icon;
+                  const active = isActive(link.href);
                   return (
                     <Link
                       key={link.name}
                       href={link.href}
-                      className="flex items-center space-x-3 rounded-lg p-3 text-sm font-medium hover:bg-accent"
+                      className={`flex items-center space-x-3 rounded-lg p-3 text-sm font-medium transition-colors ${
+                        active 
+                          ? "bg-accent text-accent-foreground" 
+                          : "hover:bg-accent"
+                      }`}
                       onClick={() => setIsOpen(false)}
                       scroll={false}
                     >
-                      <Icon className="h-5 w-5 text-muted-foreground" />
+                      <Icon className={`h-5 w-5 ${active ? "text-blue-600" : "text-muted-foreground"}`} />
                       <div>
                         <div>{link.name}</div>
                         <div className="text-xs text-muted-foreground">
@@ -211,7 +277,7 @@ export default function Navbar() {
                     </Link>
                   );
                 })}
-                {homeLinks.map((link) => {
+                {!isSignedIn && homeLinks.map((link) => {
                   const Icon = link.icon;
                   return (
                     <Link
@@ -256,41 +322,59 @@ export default function Navbar() {
               </div>
 
               {/* Mobile Auth */}
-              <div className="mt-4 pt-4 border-t flex flex-col items-center gap-2">
+              <div className="mt-4 pt-4 border-t">
                 {isSignedIn ? (
-                  <>
-                    <div className="flex items-center space-x-3">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3 px-3">
                       <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-medium">
                         {user?.name?.charAt(0) || user?.username?.charAt(0)}
                       </div>
-                      <span className="font-medium">Hi, {user?.name || user?.username}</span>
+                      <div>
+                        <span className="font-medium block">{user?.name || user?.username}</span>
+                        <span className="text-xs text-muted-foreground">{user?.email}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start">
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          Dashboard
+                        </Button>
+                      </Link>
+                      <Link href="/jobs" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start">
+                          <Briefcase className="mr-2 h-4 w-4" />
+                          My Jobs
+                        </Button>
+                      </Link>
+                      <Link href="/resumes" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start">
+                          <FileText className="mr-2 h-4 w-4" />
+                          My Resumes
+                        </Button>
+                      </Link>
                     </div>
                     <Button
                       variant="outline"
-                      className="w-full max-w-xs bg-transparent"
+                      className="w-full text-red-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
                       onClick={() => {
                         signOut();
                         setIsOpen(false);
                       }}
                     >
+                      <LogOut className="mr-2 h-4 w-4" />
                       Sign Out
                     </Button>
-                  </>
+                  </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+                  <div className="flex flex-col gap-2">
                     <Link href="/login" onClick={() => setIsOpen(false)}>
-                      <Button
-                        variant="ghost"
-                        className="w-full bg-transparent"
-                      >
+                      <Button variant="outline" className="w-full">
                         Sign In
                       </Button>
                     </Link>
                     <Link href="/signup" onClick={() => setIsOpen(false)}>
-                      <Button
-                        variant="outline"
-                        className="w-full bg-transparent"
-                      >
+                      <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
                         Sign Up
                       </Button>
                     </Link>
