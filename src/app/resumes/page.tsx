@@ -498,10 +498,9 @@ export default function ResumeManagerPage() {
                         {/* Actions */}
                         <div className="flex items-center gap-2">
                           <Button
-                            asChild
                             size="sm"
                             variant="outline"
-                            className="hidden sm:flex"
+                            asChild
                           >
                             <a
                               href={resume.url}
@@ -534,17 +533,6 @@ export default function ResumeManagerPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild className="sm:hidden">
-                                <a
-                                  href={resume.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center"
-                                >
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Download
-                                </a>
-                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
                                 setEditingId(resume.id);
                                 setEditName(resume.name || "Resume");
