@@ -39,6 +39,7 @@ interface Resume {
 export default function ResumeManagerPage() {
   const { data: session, status } = useSession();
   const isSignedIn = status === "authenticated";
+  const isLoadingAuth = status === "loading";
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -51,8 +52,12 @@ export default function ResumeManagerPage() {
   const [editName, setEditName] = useState<string>("");
 
   useEffect(() => {
-    if (isSignedIn) fetchResumes();
-  }, [isSignedIn]);
+    if (isSignedIn) {
+      fetchResumes();
+    } else if (!isLoadingAuth) {
+      setLoading(false);
+    }
+  }, [isSignedIn, isLoadingAuth]);
 
   const fetchResumes = async () => {
     setLoading(true);
@@ -64,10 +69,11 @@ export default function ResumeManagerPage() {
       } else {
         const data: { resumes: Resume[] } = await res.json();
         if (data.resumes) {
-          // Add default names if not present
-          const resumesWithNames = data.resumes.map((r, index) => ({
+          // Add default names and map dates if not present
+          const resumesWithNames = data.resumes.map((r: any, index: number) => ({
             ...r,
             name: r.name || `Resume ${index + 1}`,
+            createdAt: r.createdAt || r.created_at || new Date().toISOString(),
           }));
           setResumes(resumesWithNames);
         }
@@ -260,18 +266,22 @@ export default function ResumeManagerPage() {
     r.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading && isSignedIn) {
+  if (loading || isLoadingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 p-6">
-        <div className="max-w-5xl mx-auto space-y-8">
-          <div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse" />
-          <div className="h-64 bg-zinc-200 dark:bg-zinc-700 rounded-xl animate-pulse" />
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-zinc-200 dark:bg-zinc-700 rounded-xl animate-pulse" />
-            ))}
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <div className="relative">
+            <div className="w-12 h-12 border-4 border-green-200 dark:border-green-800 rounded-full" />
+            <div className="absolute inset-0 w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
           </div>
-        </div>
+          <span className="text-zinc-600 dark:text-zinc-400">
+            {isLoadingAuth ? "Checking authentication..." : "Loading resumes..."}
+          </span>
+        </motion.div>
       </div>
     );
   }
@@ -488,7 +498,11 @@ export default function ResumeManagerPage() {
                             )}
                             <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                               <Clock className="w-3 h-3" />
-                              <span>{new Date(resume.createdAt).toLocaleDateString()}</span>
+                              <span>
+                                {resume.createdAt && !isNaN(new Date(resume.createdAt).getTime())
+                                  ? new Date(resume.createdAt).toLocaleDateString()
+                                  : "Recently uploaded"}
+                              </span>
                               <span>•</span>
                               <span>PDF</span>
                             </div>

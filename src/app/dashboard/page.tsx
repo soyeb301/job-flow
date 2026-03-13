@@ -53,26 +53,43 @@ interface Resume {
 export default function DashboardPage() {
   const { status } = useSession();
   const isSignedIn = status === "authenticated";
+  const isLoadingAuth = status === "loading";
   const [jobs, setJobs] = useState<Job[]>([]);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isSignedIn) fetchDashboardData();
-  }, [isSignedIn]);
+    if (isSignedIn) {
+      fetchDashboardData();
+    } else if (!isLoadingAuth) {
+      setLoading(false);
+    }
+  }, [isSignedIn, isLoadingAuth]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const jobsRes = await fetch("/api/jobs"); // Ensure this API returns jobs for the current user
+      const jobsRes = await fetch("/api/jobs");
       const jobsData = await jobsRes.json();
 
-      const resumesRes = await fetch("/api/resume"); // Ensure this API returns resumes for current user
+      const resumesRes = await fetch("/api/resume");
       const resumesData = await resumesRes.json();
 
-      setJobs(Array.isArray(jobsData) ? jobsData : []);
-      setResumes(Array.isArray(resumesData.resumes) ? resumesData.resumes : []);
+      // Map snake_case to camelCase for jobs
+      const mappedJobs = Array.isArray(jobsData) ? jobsData.map(job => ({
+        ...job,
+        createdAt: job.created_at || job.createdAt || new Date().toISOString(),
+      })) : [];
+
+      // Map snake_case to camelCase for resumes
+      const mappedResumes = Array.isArray(resumesData.resumes) ? resumesData.resumes.map((resume: any) => ({
+        ...resume,
+        createdAt: resume.created_at || resume.createdAt || new Date().toISOString(),
+      })) : [];
+
+      setJobs(mappedJobs);
+      setResumes(mappedResumes);
     } catch (err: any) {
       setMessage(err.message || "Failed to load dashboard data.");
     } finally {
@@ -152,7 +169,7 @@ export default function DashboardPage() {
     return weeks;
   };
 
-  if (!isSignedIn) {
+  if (!isSignedIn && !isLoadingAuth) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-center px-4">
         <motion.div
@@ -205,13 +222,16 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
+        {loading || isLoadingAuth ? (
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
             />
+            <span className="text-zinc-600 dark:text-zinc-400">
+              {isLoadingAuth ? "Checking authentication..." : "Loading dashboard..."}
+            </span>
           </div>
         ) : (
           <div className="space-y-8">
@@ -548,7 +568,9 @@ export default function DashboardPage() {
                                     : `Uploaded new resume`}
                                 </p>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                  {item.date.toLocaleDateString()}
+                                  {!isNaN(item.date.getTime()) 
+                                    ? item.date.toLocaleDateString() 
+                                    : "Recently"}
                                 </p>
                               </div>
                             </div>
