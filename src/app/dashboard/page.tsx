@@ -148,20 +148,36 @@ export default function DashboardPage() {
   const getWeeklyStats = () => {
     const weeks = [];
     const now = new Date();
+    
+    // Get the start of current week (Sunday)
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setDate(now.getDate() - now.getDay());
+    currentWeekStart.setHours(0, 0, 0, 0);
 
     for (let i = 6; i >= 0; i--) {
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - i * 7);
+      // Calculate week start (Sunday)
+      const weekStart = new Date(currentWeekStart);
+      weekStart.setDate(currentWeekStart.getDate() - i * 7);
+      
+      // Calculate week end (Saturday)
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
 
       const weekJobs = jobs.filter((job) => {
         const jobDate = new Date(job.createdAt);
         return jobDate >= weekStart && jobDate <= weekEnd;
       }).length;
 
+      // Format week label
+      const weekLabel = i === 0 
+        ? "This Week" 
+        : i === 1 
+        ? "Last Week" 
+        : `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
       weeks.push({
-        week: `Week ${7 - i}`,
+        week: weekLabel,
         applications: weekJobs,
       });
     }
