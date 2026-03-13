@@ -169,20 +169,41 @@ export default function JobsPage() {
 
   if (loading || isLoadingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-50 via-blue-50/30 to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-900">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="relative">
-            <div className="w-12 h-12 border-4 border-blue-200 dark:border-blue-800 rounded-full" />
-            <div className="absolute inset-0 w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-blue-50/30 to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-900 p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header Skeleton */}
+          <div className="space-y-2">
+            <div className="h-10 w-64 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
+            <div className="h-5 w-96 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
           </div>
-          <span className="text-zinc-600 dark:text-zinc-400">
-            {isLoadingAuth ? "Checking authentication..." : "Loading your jobs..."}
-          </span>
-        </motion.div>
+          
+          {/* Quick Actions Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-24 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+            ))}
+          </div>
+          
+          {/* Stats Skeleton */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+            ))}
+          </div>
+          
+          {/* Filter Skeleton */}
+          <div className="flex gap-4">
+            <div className="flex-1 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
+            <div className="w-48 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
+          </div>
+          
+          {/* Job Cards Skeleton */}
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

@@ -223,15 +223,32 @@ export default function DashboardPage() {
         </motion.div>
 
         {loading || isLoadingAuth ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
-            />
-            <span className="text-zinc-600 dark:text-zinc-400">
-              {isLoadingAuth ? "Checking authentication..." : "Loading dashboard..."}
-            </span>
+          <div className="space-y-8">
+            {/* Quick Actions Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-24 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+              ))}
+            </div>
+            
+            {/* Stats Skeleton */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-28 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+              ))}
+            </div>
+            
+            {/* Charts Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="h-80 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+              <div className="h-80 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+            </div>
+            
+            {/* Recent Activity Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="h-96 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+              <div className="h-96 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+            </div>
           </div>
         ) : (
           <div className="space-y-8">

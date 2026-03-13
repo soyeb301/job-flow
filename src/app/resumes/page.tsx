@@ -268,20 +268,30 @@ export default function ResumeManagerPage() {
 
   if (loading || isLoadingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="relative">
-            <div className="w-12 h-12 border-4 border-green-200 dark:border-green-800 rounded-full" />
-            <div className="absolute inset-0 w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 p-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Header Skeleton */}
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <div className="h-10 w-48 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
+              <div className="h-5 w-72 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
+            </div>
+            <div className="h-10 w-32 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
           </div>
-          <span className="text-zinc-600 dark:text-zinc-400">
-            {isLoadingAuth ? "Checking authentication..." : "Loading resumes..."}
-          </span>
-        </motion.div>
+          
+          {/* Upload Zone Skeleton */}
+          <div className="h-48 bg-zinc-200 dark:bg-zinc-800 rounded-2xl animate-pulse" />
+          
+          {/* Search Skeleton */}
+          <div className="h-12 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+          
+          {/* Resume Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
