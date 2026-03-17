@@ -23,24 +23,29 @@ export default function LoginPage() {
       const username = formData.get("username") as string;
       const password = formData.get("password") as string;
 
+      console.log("Attempting login...", { username });
+
       const result = await signIn("credentials", {
         username,
         password,
         redirect: false,
       });
 
+      console.log("Login result:", result);
+
       if (result?.error) {
-        setError("Invalid username or password");
+        setError(`Login failed: ${result.error}`);
         setLoading(false);
       } else if (result?.ok) {
-        // Successful login
+        console.log("Login successful, redirecting...");
         window.location.href = "/dashboard";
       } else {
-        setError("Something went wrong. Please try again.");
+        setError("Login returned no result. Please try again.");
         setLoading(false);
       }
-    } catch (err) {
-      setError("Network error. Please check your connection.");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(`Error: ${err.message || "Unknown error"}`);
       setLoading(false);
     }
   };
