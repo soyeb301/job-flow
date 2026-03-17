@@ -18,22 +18,30 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const username = formData.get("username") as string;
-    const password = formData.get("password") as string;
+    try {
+      const formData = new FormData(e.currentTarget);
+      const username = formData.get("username") as string;
+      const password = formData.get("password") as string;
 
-    const result = await signIn("credentials", {
-      username,
-      password,
-      redirect: false,
-    });
+      const result = await signIn("credentials", {
+        username,
+        password,
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError("Invalid username or password");
+      if (result?.error) {
+        setError("Invalid username or password");
+        setLoading(false);
+      } else if (result?.ok) {
+        // Successful login
+        window.location.href = "/dashboard";
+      } else {
+        setError("Something went wrong. Please try again.");
+        setLoading(false);
+      }
+    } catch (err) {
+      setError("Network error. Please check your connection.");
       setLoading(false);
-    } else {
-      router.push("/dashboard");
-      router.refresh();
     }
   };
 
