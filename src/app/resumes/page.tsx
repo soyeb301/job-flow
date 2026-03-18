@@ -296,8 +296,21 @@ export default function ResumeManagerPage() {
     );
   }
 
+  // Wait for auth check to complete
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-green-200 dark:border-green-800 rounded-full" />
+          <div className="absolute w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-zinc-600 dark:text-zinc-400">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
   if (!isSignedIn) {
-    // Redirect to login if not authenticated
     if (typeof window !== 'undefined') {
       window.location.href = '/login?callbackUrl=/resumes';
     }
