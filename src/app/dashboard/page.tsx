@@ -186,31 +186,11 @@ export default function DashboardPage() {
   };
 
   if (!isSignedIn && !isLoadingAuth) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen text-center px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md"
-        >
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Briefcase className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Welcome to JOB FLOW
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-8">
-            Sign in to access your personalized job tracking dashboard with
-            AI-powered insights.
-          </p>
-          <Link href="/login">
-            <Button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg">
-              Sign In to Continue
-            </Button>
-          </Link>
-        </motion.div>
-      </div>
-    );
+    // Redirect to login if not authenticated
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login?callbackUrl=/dashboard';
+    }
+    return null;
   }
 
   return (

@@ -209,30 +209,11 @@ export default function JobsPage() {
   }
 
   if (!isSignedIn) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-50 via-blue-50/30 to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-900 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-md"
-        >
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/25">
-            <Briefcase className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-3">
-            Access Required
-          </h2>
-          <p className="text-zinc-600 dark:text-zinc-400 mb-6">
-            Sign in to track your job applications and get AI-powered resume matching.
-          </p>
-          <Link href="/login">
-            <Button className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-lg shadow-blue-500/25">
-              Sign In to Continue
-            </Button>
-          </Link>
-        </motion.div>
-      </div>
-    );
+    // Redirect to login if not authenticated
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login?callbackUrl=/jobs';
+    }
+    return null;
   }
 
   const stats = {
